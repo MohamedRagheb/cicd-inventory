@@ -1,0 +1,15 @@
+services:
+  preview:
+    build:
+      context: .
+      dockerfile: Dockerfile.preview
+    container_name: cicd-inventory-preview
+    ports:
+      - "4173:4173"
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: cicd-inventory-dev
+    ports:
+      - "4173:4173"

@@ -1,0 +1,33 @@
+name: Auto Sync testing to production
+on:
+  push:
+    branches: ["develop"]
+
+jobs:
+  pull-request:
+    name: Sync to Production
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Generate PR body
+        id: pr_body
+        run: |
+          export new_merge_commits="- $(git log --merges --oneline --abbrev-commit origin/main..origin/develop)"
+          export did_env_change="$(git diff --name-status origin/main...origin/develop | grep -q env.example && echo -e "%0A%0A:red_circle: env file was modified")"
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$new_merge_commits $did_env_change" >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
+      - uses: repo-sync/pull-request@v2
+        name: pull-request
+        with:
+          destination_branch: "main"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: kt3k/update-pr-description@v1.0.1
+        with:
+          pr_title: "Sync to Production"
+          pr_body: "${{ steps.pr_body.outputs.body }}"
+          destination_branch: "main"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
